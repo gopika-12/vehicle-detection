@@ -55,10 +55,11 @@ def generator(samples, batch_size=32):
 
 car_imgs = list(Path('./data/vehicles').iterdir())
 non_car_imgs = list(Path('./data/non-vehicles').iterdir())
+# 2x noncars than cars, fix this
 n_cars = len(car_imgs)
 n_non_cars = len(non_car_imgs)
 
-all_imgs = car_imgs = non_car_imgs # List of all filenames
+all_imgs = car_imgs + non_car_imgs # List of all filenames
 random.shuffle(all_imgs) # Shuffle the order
 train, val = train_test_split(all_imgs, test_size=0.2) # Split the CSV into a test/val dataset
 
