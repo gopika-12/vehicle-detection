@@ -11,7 +11,7 @@ from keras.layers import Flatten, Dense, Lambda, Cropping2D, Dropout
 from keras.layers.convolutional import Convolution2D
 from keras.layers.pooling import MaxPooling2D
 
-batch_size = 32
+batch_size = 64
 n_epochs = 3
 
 def generator(samples, batch_size=32):
@@ -25,7 +25,7 @@ def generator(samples, batch_size=32):
             labels = []
             for filename in batch_filenames:
                 filename = str(filename)
-                if 'extra' in filename or 'image' in filename:
+                if 'non' in filename:
                     # It's a nonvehicle image
                     label = 0
                 else:
@@ -34,6 +34,7 @@ def generator(samples, batch_size=32):
                 if image is None:
                     print('Error! Cannot find image')
                     pdb.set_trace()
+                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) # Fixes cv2.imread 
                 images.append(image)
                 labels.append(label)
 
@@ -60,6 +61,7 @@ n_cars = len(car_imgs)
 n_non_cars = len(non_car_imgs)
 
 all_imgs = car_imgs + non_car_imgs # List of all filenames
+
 random.shuffle(all_imgs) # Shuffle the order
 train, val = train_test_split(all_imgs, test_size=0.2) # Split the CSV into a test/val dataset
 
@@ -75,7 +77,7 @@ model.add(Convolution2D(48, (5, 5), strides=2, activation='relu'))
 model.add(Convolution2D(64, (3, 3), activation='relu'))
 model.add(Convolution2D(64, (3, 3), activation='relu'))
 model.add(Flatten())
-# Add dropout here?
+model.add(Dropout(0.5))
 model.add(Dense(100))
 model.add(Dense(50))
 model.add(Dense(10))
