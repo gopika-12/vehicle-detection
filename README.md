@@ -92,9 +92,11 @@ Finally, the `draw_boxes()` function, which takes all the flagged windows and ca
 
 The entire process is fairly straightforward. The main tuning needed was the boundaries / size of the sliding window search, and the threshold to set something a car. In order to reduce false positives, I isolated the sliding window search to the road area -- ignoring the sky and other areas that were not valuable to search. This also sped up computation, as there were fewer windows to analyze per frame of video.
 
-## Summary + Video
+## Video + Future Work
 
-To see the final video produced using the neural network, please [click here](https://www.youtube.com/watch?v=l2_TCLNK8Vc)
+To see the final video produced using the neural network, please [click here](https://www.youtube.com/watch?v=l2_TCLNK8Vc).
+
+While this classification pipeline performs well, there are several possible areas for future improvement. Firstly: a larger and more balanced dataset may increase classification accuracy of footage. Secondly, a more elegant sliding window approach is possible. Inferring data from previous frames to allow the system to leverage previous known areas of interest would probably increase accuracy and decrease computational load. Finally, the visualization could be cleaned up slightly by averaging all connected bounding boxes to create a polygon of some sort to represent the entire car.
 
 As I train networks and investigating deep learning, I am continually surprised to see the wide variety of applications. It continues to be a very exciting area of research for me, and this was no exception. Tuning the model and finding small but major errors was a great time, and I really enjoyed watching this project progress from start to finish.
 
