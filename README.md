@@ -1,37 +1,93 @@
 # Vehicle Detection
 [![Udacity - Self-Driving Car NanoDegree](https://s3.amazonaws.com/udacity-sdc/github/shield-carnd.svg)](http://www.udacity.com/drive)
 
+The goal of this project was to develop a computer vision system to detect vehicles found in dashcam footage. Udacity recommends a machine learning approach (SVM or similar) using color transforms or a Histogram of Oriented Gradients (HOG) feature extraction. However, I chose to use a deep learning approach, training a ConvNet on a data set and then applying a sliding window classification system to each frame of the video.
 
-In this project, your goal is to write a software pipeline to detect vehicles in a video (start with the test_video.mp4 and later implement on full project_video.mp4), but the main output or product we want you to create is a detailed writeup of the project.  Check out the [writeup template](https://github.com/udacity/CarND-Vehicle-Detection/blob/master/writeup_template.md) for this project and use it as a starting point for creating your own writeup.  
+The steps of the project:
 
-Creating a great writeup:
----
-A great writeup should include the rubric points as well as your description of how you addressed each point.  You should include a detailed description of the code used in each step (with line-number references and code snippets where necessary), and links to other supporting documents or external references.  You should include images in your writeup to demonstrate how your code works with examples.  
+1. Develop and train a convolutional neural network using the provided vehicle / non-vehicle dataset
+1. Using the trained model, analyze each frame of the dashcam video for cars using a sliding window search
 
-All that said, please be concise!  We're not looking for you to write a book here, just a brief description of how you passed each rubric point, and references to the relevant code :). 
+## Training the neural net
 
-You can submit your writeup in markdown or use another method and submit a pdf instead.
+To train the model, I used `train.py`.
 
-The Project
----
+I started with NVIDIA's end to end vehicle control architecture, which I've had good results with previously. Using the pathlib library, I loaded the dataset:
 
-The goals / steps of this project are the following:
+```
+car_imgs = list(Path('./data/vehicles').iterdir())
+non_car_imgs = list(Path('./data/non-vehicles').iterdir())
+```
 
-* Perform a Histogram of Oriented Gradients (HOG) feature extraction on a labeled training set of images and train a classifier Linear SVM classifier
-* Optionally, you can also apply a color transform and append binned color features, as well as histograms of color, to your HOG feature vector. 
-* Note: for those first two steps don't forget to normalize your features and randomize a selection for training and testing.
-* Implement a sliding-window technique and use your trained classifier to search for vehicles in images.
-* Run your pipeline on a video stream (start with the test_video.mp4 and later implement on full project_video.mp4) and create a heat map of recurring detections frame by frame to reject outliers and follow detected vehicles.
-* Estimate a bounding box for vehicles detected.
+Here's a sample vehicle and non-vehicle image:
 
-Here are links to the labeled data for [vehicle](https://s3.amazonaws.com/udacity-sdc/Vehicle_Tracking/vehicles.zip) and [non-vehicle](https://s3.amazonaws.com/udacity-sdc/Vehicle_Tracking/non-vehicles.zip) examples to train your classifier.  These example images come from a combination of the [GTI vehicle image database](http://www.gti.ssr.upm.es/data/Vehicle_database.html), the [KITTI vision benchmark suite](http://www.cvlibs.net/datasets/kitti/), and examples extracted from the project video itself.   You are welcome and encouraged to take advantage of the recently released [Udacity labeled dataset](https://github.com/udacity/self-driving-car/tree/master/annotations) to augment your training data.  
+![vehicle]
+![non-vehicle]
 
-Some example images for testing your pipeline on single frames are located in the `test_images` folder.  To help the reviewer examine your work, please save examples of the output from each stage of your pipeline in the folder called `ouput_images`, and include them in your writeup for the project by describing what each image shows.    The video called `project_video.mp4` is the video your pipeline should work well on.  
+Then I concatenated them together and created a test/train split:
 
-**As an optional challenge** Once you have a working pipeline for vehicle detection, add in your lane-finding algorithm from the last project to do simultaneous lane-finding and vehicle detection!
+```
+all_imgs = car_imgs + non_car_imgs # List of all filenames
+random.shuffle(all_imgs)
+train, val = train_test_split(all_imgs, test_size=0.2) # Split into a test/val dataset
+```
 
-**If you're feeling ambitious** (also totally optional though), don't stop there!  We encourage you to go out and take video of your own, and show us how you would implement this project on a new video!
+This long list of filenames was then passed into my generator function, where the images were lazily loaded and labels added based on where the image was coming from.
 
-## How to write a README
-A well written README file can enhance your project and portfolio.  Develop your abilities to create professional README files by completing [this free course](https://www.udacity.com/course/writing-readmes--ud777).
+```
+for filename in batch_filenames:
+    if 'non' in filename: # It's a nonvehicle image
+        label = 0
+    else:
+        label = 1
+    image = cv2.imread(filename)
+    image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) # Fixes cv2.imread
+    images.append(image)
+    labels.append(label)
+```
 
+Note: `cv2.imread` brings in the image as BGR, whereas the dashcam footage is going to be read in as RGB. This tripped me up for a bit -- make sure the training and test applications have the exact same style of data!
+
+I also mirrored all the images for data augmentation, which increased the dataset size.
+
+My model is very similar to NVIDIA's, with some dropout added between the convolution layers and the fully connected.
+
+```
+Epoch 9/9 │167/166 [================] - 8s 48ms/step - loss: 0.0142 - val_loss: 0.0080
+```
+
+After nine epochs, things were looking good.  The validation loss is almost half the training loss, but some epochs it was pretty similar, so I decided to stop at 9.
+
+Now that the model is trained, it's time to test it!
+
+## Using the trained model
+
+To use the trained model, I used `Video.ipynb`. First, I loaded in an image from the training dataset and used the model to predict if it was a car or not:
+
+```
+filename = './data/vehicles/3.png'
+image = cv2.imread(filename)
+image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
+model.predict(image[None, :, :, :], batch_size=1)
+```
+
+Unsurprisingly, it prints a car label: ` `
+
+There are several helper functions involved in this process:
+
+First, `slide_window()`, which creates a list of windows to search in the image based on the function parameters. This allowed me to easily change the boundaries of the sliding window search, the stride, and the size of the windows.
+
+Second, the actual `search_windows()` function. This is where the pretrained model comes in -- it grabs each window, resizes it to be 64x64 (the image size the model was trained on), and gets a prediction. If the prediction is above the threshold (0.8 seemed to work well), then it flags that window to be drawn on the image.
+
+Finally, the `draw_boxes()` function, which takes all the flagged windows and calls `cv2.rectangle()`.
+
+The entire process is fairly straightforward. The main tuning needed was the boundaries / size of the sliding window search, and the threshold to set something a car.
+
+## Summary
+
+As I continue training networks and investigating deep learning, I continue to see the wide variety of impressive applications. It continues to be a very exciting area of research for me, and this was no exception. Tuning the model and finding small but major errors was a great time, and I really enjoyed watching this project progress from start to finish.
+
+
+[//]: # (Image References)
+[vehicle]: ./data/vehicles/3.png
+[non-vehicle]: ./data/non-vehicles/image986.png

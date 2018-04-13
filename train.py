@@ -25,8 +25,7 @@ def generator(samples, batch_size=32):
             labels = []
             for filename in batch_filenames:
                 filename = str(filename)
-                if 'non' in filename:
-                    # It's a nonvehicle image
+                if 'non' in filename: # It's a nonvehicle image
                     label = 0
                 else:
                     label = 1
@@ -34,7 +33,7 @@ def generator(samples, batch_size=32):
                 if image is None:
                     print('Error! Cannot find image')
                     pdb.set_trace()
-                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) # Fixes cv2.imread 
+                image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB) # Fixes cv2.imread
                 images.append(image)
                 labels.append(label)
 
@@ -47,11 +46,9 @@ def generator(samples, batch_size=32):
                 aug_labels.append(label)
             images += aug_images
             labels += aug_labels
-    
-            X_train = np.array(images) 
-            y_train = np.array(labels) 
-            # yield (X_train, y_train) # inputs, targets
-            # Shuffle again for some reason (this might accidentally unshuffle it and break everything)
+
+            X_train = np.array(images)
+            y_train = np.array(labels)
             yield sklearn.utils.shuffle(X_train, y_train) # inputs, targets
 
 car_imgs = list(Path('./data/vehicles').iterdir())
@@ -62,15 +59,14 @@ n_non_cars = len(non_car_imgs)
 
 all_imgs = car_imgs + non_car_imgs # List of all filenames
 
-random.shuffle(all_imgs) # Shuffle the order
-train, val = train_test_split(all_imgs, test_size=0.2) # Split the CSV into a test/val dataset
+random.shuffle(all_imgs)
+train, val = train_test_split(all_imgs, test_size=0.2) # Split into a test/val dataset
 
 train_gen = generator(train, batch_size)
 val_gen = generator(val, batch_size)
 
 model = Sequential()
-# Normalize the images
-model.add(Lambda(lambda x: (x / 255.0) - 0.5, input_shape=(64,64,3)))
+model.add(Lambda(lambda x: (x / 255.0) - 0.5, input_shape=(64,64,3))) # Normalize the images
 model.add(Convolution2D(24, (5, 5), strides=2, activation='relu'))
 model.add(Convolution2D(36, (5, 5), strides=2, activation='relu'))
 model.add(Convolution2D(48, (5, 5), strides=2, activation='relu'))
@@ -85,7 +81,7 @@ model.add(Dense(1))
 
 model.compile(loss='mse', optimizer='adam')
 model.fit_generator(train_gen, steps_per_epoch = len(train) / batch_size, \
-    epochs=n_epochs, validation_data=val_gen, validation_steps = len(val) / batch_size) 
+    epochs=n_epochs, validation_data=val_gen, validation_steps = len(val) / batch_size)
 
 
 print('Saving model to file...')
