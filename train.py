@@ -12,10 +12,10 @@ from keras.layers.convolutional import Convolution2D
 from keras.layers.pooling import MaxPooling2D
 
 batch_size = 64
-n_epochs = 3
+n_epochs = 9
 
 def generator(samples, batch_size=32):
-    """Takes the a list of lines from a CSV and generates a list of images
+    """Takes the a list of filenames and generates a list of images
     """
     n_samples = len(samples)
     while True: # Loop forever so the generator never exits, as expected by keras.fit_generator
@@ -80,8 +80,8 @@ model.add(Dense(10))
 model.add(Dense(1))
 
 model.compile(loss='mse', optimizer='adam')
-model.fit_generator(train_gen, steps_per_epoch = len(train) / batch_size, \
-    epochs=n_epochs, validation_data=val_gen, validation_steps = len(val) / batch_size)
+model.fit_generator(train_gen, steps_per_epoch=len(train)/batch_size, \
+    epochs=n_epochs, validation_data=val_gen, validation_steps=len(val)/batch_size) 
 
 
 print('Saving model to file...')
