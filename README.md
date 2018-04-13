@@ -89,5 +89,5 @@ As I continue training networks and investigating deep learning, I continue to s
 
 
 [//]: # (Image References)
-[vehicle]: ./data/vehicles/3.png
-[non-vehicle]: ./data/non-vehicles/image986.png
+[vehicle]: ./output_images/vehicle.png
+[non-vehicle]: ./output_images/non-vehicle.png
