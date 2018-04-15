@@ -88,13 +88,15 @@ First, `slide_window()`, which creates a list of windows to search in the image 
 
 Second, the actual `search_windows()` function. This is where the pretrained model comes in -- it grabs each window, resizes it to be 64x64 (the image size the model was trained on), and gets a prediction. If the prediction is above the threshold (0.7 seemed to work well), then it flags that window to be drawn on the image.
 
-Finally, the `draw_boxes()` function, which takes all the flagged windows and calls `cv2.rectangle()`.
+### Smoothing and False Positive Detection
 
-The entire process is fairly straightforward. The main tuning needed was the boundaries / size of the sliding window search, and the threshold to set something a car. In order to reduce false positives, I isolated the sliding window search to the road area -- ignoring the sky and other areas that were not valuable to search. This also sped up computation, as there were fewer windows to analyze per frame of video.
+The labelling of the car in each frame is fairly jerky, and tends to jump around from frame to frame. Additionally, there are a few false positive present due to inaccuracies in the neural net. Both of these problems can be fixed by ensuring that all boxes labeled have been present for the past several frames. This was implemented using a heatmap: for each frame, the last 20 frames were analyzed and each pixel that was found to be part of a car was incremented, once per frame (thus, each pixel could have a maximum value of 20). All pixels that had a value of 10 or less were discarded, leaving only strong areas of interest that had a track record of being a car. With these pixels calulated, the `scipy.ndimage.measurements.label()` function was used to isolate these non zero pixels, and `cv2.rectangle()` was used to draw the bounding boxes. 
+
+The main tuning needed was the boundaries / size of the sliding window search, and the threshold to set something a car. In order to reduce false positives, I isolated the sliding window search to the road area -- ignoring the sky and other areas that were not valuable to search. This also sped up computation, as there were fewer windows to analyze per frame of video.
 
 ## Video + Future Work
 
-To see the final video produced using the neural network, please [click here](https://www.youtube.com/watch?v=l2_TCLNK8Vc).
+To see the final video produced using the neural network, please [click here](https://youtu.be/iCGRa37d61s).
 
 While this classification pipeline performs well, there are several possible areas for future improvement. Firstly: a larger and more balanced dataset may increase classification accuracy of footage. Secondly, a more elegant sliding window approach is possible. Inferring data from previous frames to allow the system to leverage previous known areas of interest would probably increase accuracy and decrease computational load. Finally, the visualization could be cleaned up slightly by averaging all connected bounding boxes to create a polygon of some sort to represent the entire car.
 
