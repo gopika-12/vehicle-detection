@@ -98,10 +98,9 @@ The main tuning needed was the boundaries / size of the sliding window search, a
 
 To see the final video produced using the neural network, please [click here](https://youtu.be/iCGRa37d61s).
 
-While this classification pipeline performs well, there are several possible areas for future improvement. Firstly: a larger and more balanced dataset may increase classification accuracy of footage. Secondly, a more elegant sliding window approach is possible. Inferring data from previous frames to allow the system to leverage previous known areas of interest would probably increase accuracy and decrease computational load. Finally, the visualization could be cleaned up slightly by averaging all connected bounding boxes to create a polygon of some sort to represent the entire car.
+While this classification pipeline performs well, there are several possible areas for future improvement. Firstly: a larger and more balanced dataset may increase classification accuracy of footage. Secondly, different networks / data augmentation could be experimented with achieve better results. The current network works effecitvely for the given task, but there may be improvements that I'm not aware of. Finally, the visualization could be cleaned up by averaging all connected bounding boxes to create a polygon of some sort to represent the entire car.
 
-As I train networks and investigating deep learning, I am continually surprised to see the wide variety of applications. It continues to be a very exciting area of research for me, and this was no exception. Tuning the model and finding small but major errors was a great time, and I really enjoyed watching this project progress from start to finish.
-
+As I train networks and investigating deep learning, I am continually surprised to see the wide variety of applications. It continues to be a very exciting area of research for me, and this was no exception. Tuning the model and finding errors was a great time, and I really enjoyed this project's progress from start to finish.
 
 [//]: # (Image References)
 [vehicle]: ./output_images/vehicle.png
